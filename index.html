@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mental Health Companion</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="background-animation">
+        <div class="wave wave1"></div>
+        <div class="wave wave2"></div>
+        <div class="wave wave3"></div>
+    </div>
+
+    <div class="container">
+        <!-- Welcome Screen -->
+        <div id="welcomeScreen" class="screen active">
+            <div class="welcome-card">
+                <div class="logo">
+                    <div class="heart-pulse">💚</div>
+                </div>
+                <h1 class="main-title">Mental Health Companion</h1>
+                <p class="subtitle">Your personal wellness journey starts here</p>
+                
+                <div class="input-group">
+                    <label for="userName">What's your name?</label>
+                    <input type="text" id="userName" placeholder="Enter your name" required>
+                </div>
+                
+                <div class="input-group">
+                    <label for="userAge">Your age</label>
+                    <input type="number" id="userAge" placeholder="Enter your age" min="1" max="120" required>
+                </div>
+                
+                <button class="btn btn-primary" onclick="startApp()">
+                    Begin Your Journey
+                    <span class="btn-icon">→</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Dashboard -->
+        <div id="dashboard" class="screen">
+            <header class="dashboard-header">
+                <div class="user-info">
+                    <div class="avatar">
+                        <span id="userAvatar">👤</span>
+                    </div>
+                    <div class="user-details">
+                        <h2 id="dashboardUserName">Welcome!</h2>
+                        <p id="currentDate"></p>
+                    </div>
+                </div>
+                <button class="btn-icon-only" onclick="showUserInfo()">
+                    <span>ℹ️</span>
+                </button>
+            </header>
+
+            <div class="dashboard-grid">
+                <div class="card card-primary" onclick="startMoodTracking()">
+                    <div class="card-icon">📝</div>
+                    <h3>Track Your Mood</h3>
+                    <p>Record how you're feeling today</p>
+                </div>
+
+                <div class="card card-secondary" onclick="showMoodHistory()">
+                    <div class="card-icon">📊</div>
+                    <h3>Mood History</h3>
+                    <p>View your emotional journey</p>
+                </div>
+
+                <div class="card card-tertiary" onclick="showResources()">
+                    <div class="card-icon">🌟</div>
+                    <h3>Wellness Resources</h3>
+                    <p>Quotes and exercises</p>
+                </div>
+
+                <div class="card card-accent" onclick="showStatistics()">
+                    <div class="card-icon">📈</div>
+                    <h3>Statistics</h3>
+                    <p>Your mood insights</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mood Tracking Screen -->
+        <div id="moodTrackingScreen" class="screen">
+            <div class="screen-header">
+                <button class="btn-back" onclick="backToDashboard()">← Back</button>
+                <h2>How are you feeling?</h2>
+            </div>
+
+            <div class="mood-selector">
+                <div class="mood-option" data-mood="1" onclick="selectMood(1)">
+                    <div class="mood-emoji">😢</div>
+                    <p>Very Sad</p>
+                </div>
+                <div class="mood-option" data-mood="2" onclick="selectMood(2)">
+                    <div class="mood-emoji">😔</div>
+                    <p>Sad</p>
+                </div>
+                <div class="mood-option" data-mood="3" onclick="selectMood(3)">
+                    <div class="mood-emoji">😐</div>
+                    <p>Neutral</p>
+                </div>
+                <div class="mood-option" data-mood="4" onclick="selectMood(4)">
+                    <div class="mood-emoji">😊</div>
+                    <p>Happy</p>
+                </div>
+                <div class="mood-option" data-mood="5" onclick="selectMood(5)">
+                    <div class="mood-emoji">😄</div>
+                    <p>Very Happy</p>
+                </div>
+            </div>
+
+            <div class="mood-notes">
+                <label for="moodNotes">Add some notes (optional)</label>
+                <textarea id="moodNotes" placeholder="What's on your mind?"></textarea>
+            </div>
+
+            <button class="btn btn-primary" onclick="saveMood()">
+                Save Mood Entry
+                <span class="btn-icon">✓</span>
+            </button>
+        </div>
+
+        <!-- Support Screen -->
+        <div id="supportScreen" class="screen">
+            <div class="screen-header">
+                <button class="btn-back" onclick="backToDashboard()">← Back</button>
+                <h2>Support & Guidance</h2>
+            </div>
+
+            <div class="support-content">
+                <div class="support-card">
+                    <div class="support-icon">💭</div>
+                    <h3 id="supportMessage"></h3>
+                </div>
+
+                <div class="quote-card">
+                    <div class="quote-icon">💡</div>
+                    <p id="inspiringQuote"></p>
+                </div>
+
+                <div class="exercise-card">
+                    <h3>Recommended Exercise</h3>
+                    <p id="calmingExercise"></p>
+                </div>
+
+                <div class="all-exercises" id="allExercises"></div>
+            </div>
+
+            <button class="btn btn-secondary" onclick="showAllExercises()">
+                Show More Exercises
+            </button>
+            <button class="btn btn-primary" onclick="backToDashboard()">
+                Continue
+            </button>
+        </div>
+
+        <!-- History Screen -->
+        <div id="historyScreen" class="screen">
+            <div class="screen-header">
+                <button class="btn-back" onclick="backToDashboard()">← Back</button>
+                <h2>Your Mood Journey</h2>
+            </div>
+
+            <div id="historyContent" class="history-content"></div>
+        </div>
+
+        <!-- Statistics Screen -->
+        <div id="statisticsScreen" class="screen">
+            <div class="screen-header">
+                <button class="btn-back" onclick="backToDashboard()">← Back</button>
+                <h2>Mood Statistics</h2>
+            </div>
+
+            <div id="statisticsContent" class="statistics-content"></div>
+        </div>
+
+        <!-- User Info Modal -->
+        <div id="userInfoModal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="closeUserInfo()">&times;</span>
+                <h2>User Information</h2>
+                <div class="user-info-details">
+                    <p><strong>Name:</strong> <span id="modalUserName"></span></p>
+                    <p><strong>Age:</strong> <span id="modalUserAge"></span></p>
+                    <p><strong>Total Entries:</strong> <span id="modalTotalEntries"></span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
