@@ -6,6 +6,7 @@ Simple HTTP server to run the application on localhost
 
 import http.server
 import socketserver
+import socket
 import webbrowser
 import os
 from pathlib import Path
@@ -13,6 +14,22 @@ from pathlib import Path
 # Configuration
 PORT = 8000
 DIRECTORY = Path(__file__).parent
+
+
+def find_available_port(start_port):
+    port = start_port
+    while port <= 8100:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+            sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            if sock.connect_ex(("127.0.0.1", port)) != 0:
+                return port
+        port += 1
+
+    raise OSError("No free port found in range 8000-8100")
+
+
+class ReusableTCPServer(socketserver.TCPServer):
+    allow_reuse_address = True
 
 class CustomHandler(http.server.SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
@@ -23,6 +40,9 @@ class CustomHandler(http.server.SimpleHTTPRequestHandler):
         self.send_header('X-Content-Type-Options', 'nosniff')
         self.send_header('X-Frame-Options', 'DENY')
         self.send_header('X-XSS-Protection', '1; mode=block')
+        self.send_header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+        self.send_header('Pragma', 'no-cache')
+        self.send_header('Expires', '0')
         super().end_headers()
     
     def log_message(self, format, *args):
@@ -32,10 +52,12 @@ class CustomHandler(http.server.SimpleHTTPRequestHandler):
 def main():
     # Change to the script directory
     os.chdir(DIRECTORY)
+
+    active_port = find_available_port(PORT)
     
     # Create server
-    with socketserver.TCPServer(("", PORT), CustomHandler) as httpd:
-        url = f"http://localhost:{PORT}"
+    with ReusableTCPServer(("", active_port), CustomHandler) as httpd:
+        url = f"http://localhost:{active_port}"
         
         print("=" * 60)
         print("🌟 Mental Health Companion Server")

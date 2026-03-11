@@ -9,6 +9,12 @@ let currentUser = {
 
 let selectedMood = null;
 
+const STORAGE_KEYS = {
+    profile: 'mentalHealthUserProfile',
+    session: 'mentalHealthSessionActive',
+    legacyProfile: 'mentalHealthUser'
+};
+
 // Mood Configuration
 const MOODS = {
     1: { name: 'Very Sad', emoji: '😢', color: '#e74c3c' },
@@ -99,6 +105,7 @@ const SUPPORT_MESSAGES = {
 function initializeApp() {
     loadUserData();
     updateCurrentDate();
+    updateWelcomeState();
     
     // Set up event listeners
     document.getElementById('userName').addEventListener('keypress', function(e) {
@@ -116,26 +123,21 @@ function initializeApp() {
 
 // Start Application
 function startApp() {
-    const name = document.getElementById('userName').value.trim();
-    const age = parseInt(document.getElementById('userAge').value);
-    
-    if (!name) {
-        alert('Please enter your name');
+    const userInput = getValidatedUserInput();
+
+    if (!userInput) {
         return;
     }
-    
-    if (!age || age < 1 || age > 120) {
-        alert('Please enter a valid age');
-        return;
-    }
-    
-    currentUser.name = name;
-    currentUser.age = age;
+
+    currentUser.name = userInput.name;
+    currentUser.age = userInput.age;
     
     saveUserData();
+    setSessionState(true);
     
     showScreen('dashboard');
     updateDashboard();
+    updateWelcomeState();
 }
 
 // Screen Navigation
@@ -150,6 +152,63 @@ function backToDashboard() {
     showScreen('dashboard');
     selectedMood = null;
     clearMoodSelection();
+}
+
+function resetCurrentUser() {
+    currentUser = {
+        name: '',
+        age: 0,
+        moodHistory: []
+    };
+    selectedMood = null;
+}
+
+function logoutUser() {
+    const shouldLogout = window.confirm('Do you want to log out? Your profile will stay saved, but you will need to log in again.');
+
+    if (!shouldLogout) {
+        return;
+    }
+
+    setSessionState(false);
+    closeUserInfo();
+    clearMoodSelection();
+
+    document.getElementById('moodNotes').value = '';
+    populateWelcomeForm();
+    updateWelcomeState();
+
+    showScreen('welcomeScreen');
+}
+
+function loginUser() {
+    const savedProfile = getSavedProfile();
+
+    if (!savedProfile) {
+        alert('No saved profile found. Please use Save & Enter first.');
+        return;
+    }
+
+    const enteredName = document.getElementById('userName').value.trim();
+    const enteredAgeValue = document.getElementById('userAge').value.trim();
+    const enteredAge = enteredAgeValue ? parseInt(enteredAgeValue, 10) : savedProfile.age;
+
+    if (enteredName && enteredName !== savedProfile.name) {
+        alert('The entered name does not match the saved profile.');
+        return;
+    }
+
+    if (enteredAgeValue && enteredAge !== savedProfile.age) {
+        alert('The entered age does not match the saved profile.');
+        return;
+    }
+
+    currentUser = savedProfile;
+    populateWelcomeForm();
+    setSessionState(true);
+    showScreen('dashboard');
+    updateDashboard();
+    updateWelcomeState();
 }
 
 // Dashboard Functions
@@ -433,6 +492,60 @@ function closeUserInfo() {
     document.getElementById('userInfoModal').classList.remove('active');
 }
 
+function getValidatedUserInput() {
+    const name = document.getElementById('userName').value.trim();
+    const age = parseInt(document.getElementById('userAge').value, 10);
+
+    if (!name) {
+        alert('Please enter your name');
+        return null;
+    }
+
+    if (!age || age < 1 || age > 120) {
+        alert('Please enter a valid age');
+        return null;
+    }
+
+    return { name, age };
+}
+
+function populateWelcomeForm() {
+    document.getElementById('userName').value = currentUser.name || '';
+    document.getElementById('userAge').value = currentUser.age || '';
+}
+
+function updateWelcomeState() {
+    const loginButton = document.getElementById('loginButton');
+    const welcomeHint = document.getElementById('welcomeHint');
+    const hasSavedProfile = Boolean(getSavedProfile());
+
+    loginButton.disabled = !hasSavedProfile;
+    welcomeHint.textContent = hasSavedProfile
+        ? 'Use Log In to enter with your saved profile, or Save & Enter to update it.'
+        : 'Create your profile first, then you can log in anytime.';
+}
+
+function getSavedProfile() {
+    const savedData = localStorage.getItem(STORAGE_KEYS.profile);
+    return savedData ? JSON.parse(savedData) : null;
+}
+
+function setSessionState(isLoggedIn) {
+    localStorage.setItem(STORAGE_KEYS.session, String(isLoggedIn));
+}
+
+function migrateLegacyProfile() {
+    const legacyProfile = localStorage.getItem(STORAGE_KEYS.legacyProfile);
+
+    if (!legacyProfile || localStorage.getItem(STORAGE_KEYS.profile)) {
+        return;
+    }
+
+    localStorage.setItem(STORAGE_KEYS.profile, legacyProfile);
+    localStorage.removeItem(STORAGE_KEYS.legacyProfile);
+    setSessionState(false);
+}
+
 // Close modal when clicking outside
 window.onclick = function(event) {
     const modal = document.getElementById('userInfoModal');
@@ -443,22 +556,34 @@ window.onclick = function(event) {
 
 // Data Persistence
 function saveUserData() {
-    localStorage.setItem('mentalHealthUser', JSON.stringify(currentUser));
+    localStorage.setItem(STORAGE_KEYS.profile, JSON.stringify(currentUser));
 }
 
 function loadUserData() {
-    const savedData = localStorage.getItem('mentalHealthUser');
+    migrateLegacyProfile();
+
+    const savedData = localStorage.getItem(STORAGE_KEYS.profile);
+    const sessionActive = localStorage.getItem(STORAGE_KEYS.session) === 'true';
+
     if (savedData) {
         currentUser = JSON.parse(savedData);
-        
-        // Skip welcome screen if user exists
+
         if (currentUser.name) {
-            document.getElementById('userName').value = currentUser.name;
-            document.getElementById('userAge').value = currentUser.age;
-            showScreen('dashboard');
-            updateDashboard();
+            populateWelcomeForm();
+
+            if (sessionActive) {
+                showScreen('dashboard');
+                updateDashboard();
+            } else {
+                showScreen('welcomeScreen');
+            }
         }
+    } else {
+        resetCurrentUser();
+        showScreen('welcomeScreen');
     }
+
+    updateWelcomeState();
 }
 
 // Utility Functions

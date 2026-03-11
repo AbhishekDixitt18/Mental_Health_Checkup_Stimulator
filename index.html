@@ -33,11 +33,18 @@
                     <label for="userAge">Your age</label>
                     <input type="number" id="userAge" placeholder="Enter your age" min="1" max="120" required>
                 </div>
-                
-                <button class="btn btn-primary" onclick="startApp()">
-                    Begin Your Journey
-                    <span class="btn-icon">→</span>
-                </button>
+
+                <div class="welcome-actions">
+                    <button class="btn btn-primary" onclick="startApp()">
+                        Save & Enter
+                        <span class="btn-icon">→</span>
+                    </button>
+                    <button id="loginButton" class="btn btn-secondary btn-login" onclick="loginUser()">
+                        Log In
+                    </button>
+                </div>
+
+                <p id="welcomeHint" class="welcome-hint">Create your profile first, then you can log in anytime.</p>
             </div>
         </div>
 
@@ -53,9 +60,14 @@
                         <p id="currentDate"></p>
                     </div>
                 </div>
-                <button class="btn-icon-only" onclick="showUserInfo()">
-                    <span>ℹ️</span>
-                </button>
+                <div class="header-actions">
+                    <button class="btn-icon-only" onclick="showUserInfo()" title="User info">
+                        <span>ℹ️</span>
+                    </button>
+                    <button class="btn btn-logout" onclick="logoutUser()" title="Log out">
+                        Log Out
+                    </button>
+                </div>
             </header>
 
             <div class="dashboard-grid">
